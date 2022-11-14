@@ -1,0 +1,15 @@
+bin/
+build/
+built-data/
+.generated/
+.library/
+
+.vscode/*
+!.vscode/*.code-snippets
+.clangd
+.cache/
+compile_commands.json
+
+# gitignored so that users can opt in/out by simply adding the files
+LivePP
+.LivePP
