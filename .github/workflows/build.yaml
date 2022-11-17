@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest] #, macos-latest, windows-latest]
-        test-script: [./gcc-debug-tests.sh]
         
         # Only testing GCC 11 for now, while this is private
         gcc-version: [11]
@@ -37,8 +36,17 @@ jobs:
         with:
           version: ${{ matrix.gcc-version }}
           platform: x64
+      
+      - name: Build Tests
+        run: ./gcc-debug-compile-tests.sh
+      
       - name: Run Tests
-        run: ${{ matrix.test-script }}
+        run: ./build/gcc-debug/tests/move-mm-tests -r junit > tests/move-mm-tests.xml
+      
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v1
+        with:
+          files: tests/**/*.xml
       # - name: Upload Artifact
       #   uses: actions/upload-artifact@v2
       #   with:
