@@ -10,6 +10,7 @@ CPMAddPackage(
 if (rpmalloc_ADDED)
     add_library(rpmalloc STATIC ${rpmalloc_SOURCE_DIR}/rpmalloc/rpmalloc.c)
     target_include_directories(rpmalloc PUBLIC "${rpmalloc_SOURCE_DIR}")
+    target_compile_definitions(rpmalloc PUBLIC -DENABLE_STATISTICS=1)
 else()
     message(FATAL_ERROR "Failed to acquire rpmalloc")
 endif()

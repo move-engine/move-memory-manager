@@ -108,9 +108,9 @@ private:
 namespace std
 {
     template <>
-    struct hash<movemm_temp_tag_t>
+    struct hash<movemm_heap_tag_t>
     {
-        typedef movemm_temp_tag_t argument_type;
+        typedef movemm_heap_tag_t argument_type;
         typedef std::size_t result_type;
 
         inline result_type operator()(const argument_type& a) const noexcept
@@ -120,15 +120,29 @@ namespace std
     };
 
     template <>
-    struct equal_to<movemm_temp_tag_t>
+    struct equal_to<movemm_heap_tag_t>
     {
         constexpr bool operator()(
-            const movemm_temp_tag_t& a, const movemm_temp_tag_t& b) const
+            const movemm_heap_tag_t& a, const movemm_heap_tag_t& b) const
         {
             return a.tag == b.tag;
         }
     };
 }  // namespace std
+
+struct registered_tagged_heap_destructor_set
+{
+    ~registered_tagged_heap_destructor_set()
+    {
+        // Destruy elements back-to-front
+        while (!_vec.empty())
+        {
+            _vec.pop_back();
+        }
+    }
+
+    vec<registered_tagged_heap_destructor> _vec;
+};
 
 class tagged_heap_tls
 {
@@ -137,14 +151,14 @@ public:
     ~tagged_heap_tls();
 
 public:
-    void* allocate(movemm_temp_tag_t tag, size_t bytes)
+    void* allocate(movemm_heap_tag_t tag, size_t bytes)
     {
         std::unique_lock<std::mutex> lock(_mutex);
         auto& storage = get_or_create_unsafe(tag);
         return storage.allocate(bytes);
     }
 
-    void free_tag(movemm_temp_tag_t tag)
+    void free_tag(movemm_heap_tag_t tag)
     {
         std::unique_lock<std::mutex> lock(_mutex);
         if (_tagStorage.count(tag))
@@ -154,7 +168,7 @@ public:
     }
 
 private:
-    inline tagged_heap_tag_storage& get_or_create_unsafe(movemm_temp_tag_t tag)
+    inline tagged_heap_tag_storage& get_or_create_unsafe(movemm_heap_tag_t tag)
     {
         if (!_tagStorage.count(tag))
         {
@@ -167,7 +181,7 @@ private:
     tagged_heap_global* _parent;
     std::mutex _mutex;
 
-    umap<movemm_temp_tag_t, tagged_heap_tag_storage> _tagStorage;
+    umap<movemm_heap_tag_t, tagged_heap_tag_storage> _tagStorage;
 };
 
 class tagged_heap_global
@@ -178,27 +192,30 @@ public:
 
 public:
     void register_destructor(
-        movemm_temp_tag_t tag, void* ptr, movemm_destructor_cb_t destructor)
+        movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor)
     {
         std::unique_lock<std::mutex> lock(_mutex);
-        if (!_destructor_set.count(tag))
+        if (!_destructor_sets.count(tag))
         {
-            _destructor_set.insert({tag, {}});
+            _destructor_sets.insert({tag, {}});
         }
 
-        auto& destructors = _destructor_set[tag];
-        destructors.push_back(
+        auto& destructors = _destructor_sets[tag];
+        destructors._vec.push_back(
             registered_tagged_heap_destructor(ptr, destructor));
     }
 
-    void free_tag(movemm_temp_tag_t tag)
+    void free_tag(movemm_heap_tag_t tag)
     {
         std::unique_lock<std::mutex> lock(_mutex);
-        if (_destructor_set.count(tag))
+        if (_destructor_sets.count(tag))
         {
-            _destructor_set.erase(tag);
+            // Destroys elements in reverse insertion order due to the type's
+            // destructor
+            _destructor_sets.erase(tag);
         }
 
+        // Clears out any thread local caches
         for (auto& it : _threadLocal)
         {
             it->free_tag(tag);
@@ -208,8 +225,8 @@ public:
 private:
     std::mutex _mutex;
     vec<tagged_heap_tls*> _threadLocal;
-    umap<movemm_temp_tag_t, vec<registered_tagged_heap_destructor>>
-        _destructor_set;
+    umap<movemm_heap_tag_t, registered_tagged_heap_destructor_set>
+        _destructor_sets;
 };
 
 tagged_heap_tls::tagged_heap_tls(tagged_heap_global& parent) : _parent(&parent)
@@ -260,18 +277,18 @@ struct temp_tls_container
 thread_local temp_tls_container tls_container;
 
 MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
-    movemm_temp_tag_t tag, size_t bytes)
+    movemm_heap_tag_t tag, size_t bytes)
 {
     return tls_container.tls.allocate(tag, bytes);
 }
 
 MOVEMM_EXPORT void movemm_register_destructor(
-    movemm_temp_tag_t tag, void* ptr, movemm_destructor_cb_t destructor)
+    movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor)
 {
     s_TempHeap.register_destructor(tag, ptr, destructor);
 }
 
-MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_temp_tag_t tag)
+MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_heap_tag_t tag)
 {
     return s_TempHeap.free_tag(tag);
 }

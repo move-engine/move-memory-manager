@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 set (CMAKE_CXX_STANDARD 17)
-set (CMAKE_C_STANDARD 17)
-project(move-memory-manager LANGUAGES C CXX ASM)
+project(move-memory-manager LANGUAGES C CXX)
 
 add_subdirectory(3rdParty)
 
@@ -25,13 +24,9 @@ else()
     add_library(move-mm STATIC ${MOVE_MEMORY_MANAGER_SOURCES})
     target_compile_definitions(move-mm PUBLIC -DMOVEMM_STATIC=1)
 endif()
-# set_target_properties(move-mm PROPERTIES UNITY_BUILD ON)
 
 target_link_libraries(move-mm PUBLIC rpmalloc)
 target_include_directories(move-mm PUBLIC "include")
-# target_precompile_headers(move-mm PUBLIC include/pch.hpp)
-
-# TODO: Set up tests
 
 option(MOVE_MEMORY_MANAGER_WITH_TESTS "Determines whether or not to build the test suite" off)
 if (MOVE_MEMORY_MANAGER_WITH_TESTS)

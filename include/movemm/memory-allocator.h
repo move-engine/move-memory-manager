@@ -53,18 +53,18 @@ MOVEMM_EXPORT void movemm_heap_free(movemm_heap_t heap, void* ptr);
 typedef struct
 {
     uint64_t tag;
-} movemm_temp_tag_t;
+} movemm_heap_tag_t;
 
 #define MOVE_ENABLE_TAGGED_HEAP
 
 #if defined(MOVE_ENABLE_TAGGED_HEAP)
 MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
-    movemm_temp_tag_t tag, size_t bytes);
+    movemm_heap_tag_t tag, size_t bytes);
 
 // TODO: Implement destructors
 typedef void (*movemm_destructor_cb_t)(void*);
 MOVEMM_EXPORT void movemm_register_destructor(
-    movemm_temp_tag_t tag, void* ptr, movemm_destructor_cb_t destructor);
+    movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor);
 
-MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_temp_tag_t tag);
+MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_heap_tag_t tag);
 #endif

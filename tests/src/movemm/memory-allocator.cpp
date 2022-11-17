@@ -11,8 +11,13 @@ SCENARIO("Testing the memory allocator API")
 #if defined(MOVE_ENABLE_TAGGED_HEAP)
 SCENARIO("Testing tagged heap")
 {
-    GIVEN("A tagged heap tag")
+    GIVEN("A tagged heap tag and an ")
     {
+        movemm_heap_tag_t tag = {100};
+
+        WHEN("An allocation is made")
+        {
+        }
     }
 }
 #endif

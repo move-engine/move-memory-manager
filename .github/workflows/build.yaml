@@ -1,0 +1,122 @@
+# Used the following yaml as reference
+# https://github.com/xiaozhuai/test_github_actions/blob/1487cc732bf08a4e5a31b3551a3db7542730f8ae/.github/workflows/build-every-commit.yml
+name: Build and Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-gcc:
+    strategy:
+      matrix:
+        os: [ubuntu-latest] #, macos-latest, windows-latest]
+        test-script: [./gcc-debug-tests.sh]
+        
+        # Only testing GCC 11 for now, while this is private
+        gcc-version: [11]
+        # gcc-version: [9, 10, 11]
+    runs-on: ${{ matrix.os }}
+    env:
+      CPM_SOURCE_CACHE: ~/.cpm/
+    steps:
+      - name: CPM Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cpm/
+          key: ${{ runner.os }}-cpm  
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1
+        with:
+          version: ${{ matrix.gcc-version }}
+          platform: x64
+      - name: Run Tests
+        run: ${{ matrix.test-script }}
+      # - name: Upload Artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: hello_linux_${{github.sha}}
+      #     path: build/hello_linux
+  # build-windows-x64-tests:
+  #   name: Build Windows x64 Tests
+  #   runs-on: windows-latest
+  #   env:
+  #     CPM_SOURCE_CACHE: ~/.cpm/
+  #   steps:
+  #     - name: CPM Cache
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ~/.cpm/
+  #         key: ${{ runner.os }}-cpm
+  #     # - name: Vulkan SDK Cache
+  #     #   uses: actions/cache@v2
+  #     #   id: vk-cache
+  #     #   with:
+  #     #     path: |
+  #     #       C:/VulkanSDK/1.2.176.1
+  #     #     key: ${{ runner.os }}-vulkan-sdk
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #     - name: Setup Vulkan
+  #       # if: steps.vk-cache.outputs.cache-hit != 'true'
+  #       run: |
+  #         Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.176.1/windows/VulkanSDK-1.2.176.1-Installer.exe" -OutFile VulkanSDK.exe
+  #         $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
+  #         $installer.WaitForExit();
+  #     - name: Build
+  #       shell: cmd
+  #       run: |
+  #         set VULKAN_SDK=C:/VulkanSDK/1.2.176.1
+  #         set PATH=%PATH%;C:/VulkanSDK/1.2.176.1/Bin
+  #         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+  #         call ninja-debug-compile-tests.bat
+  #     - name: Run Tests
+  #       run: |
+  #         mkdir tests
+  #         ./bin/Ninja_MSVC/Debug/move-tests.exe -r junit > tests/move-tests.xml
+  #     - name: Publish Unit Test Results
+  #       uses: EnricoMi/publish-unit-test-result-action/composite@v1
+  #       if: always()
+  #       with:
+  #         files: tests/**/*.xml
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: windows_x64_tests_${{github.sha}}
+  #         path: bin/Ninja_MSVC/Debug/
+  # build-windows-x64-app:
+  #   name: Build Windows x64 Application
+  #   runs-on: windows-latest
+  #   env:
+  #     CPM_SOURCE_CACHE: ~/.cpm/
+  #   steps:
+  #     - name: CPM Cache
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ~/.cpm/
+  #         key: ${{ runner.os }}
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #     - name: Build
+  #       shell: cmd
+  #       run: |
+  #         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+  #         call ninja-debug-compile.bat
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: windows_x64_tests_${{github.sha}}
+  #         path: bin/Ninja_MSVC/Debug/
