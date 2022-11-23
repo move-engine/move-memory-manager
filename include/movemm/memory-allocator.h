@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <utility>
 #include "export.h"
 
 // Basic allocation functions
@@ -48,6 +49,24 @@ MOVEMM_EXPORT void movemm_destroy_heap(movemm_heap_t);
 
 MOVEMM_EXPORT void* movemm_heap_alloc(movemm_heap_t heap, size_t bytes);
 MOVEMM_EXPORT void movemm_heap_free(movemm_heap_t heap, void* ptr);
+
+#ifdef __cplusplus
+namespace movemm
+{
+    template <typename T, typename... Args>
+    inline T* mmnew(Args&&... args)
+    {
+        return new (movemm_alloc(sizeof(T))) T(std::forward<Args>(args)...);
+    }
+
+    template <typename T>
+    inline void mmdelete(T* ptr)
+    {
+        ptr->~T();
+        movemm_free(ptr);
+    }
+}  // namespace movemm
+#endif
 
 // Temporary allocations
 typedef struct
