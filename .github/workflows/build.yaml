@@ -12,9 +12,13 @@ jobs:
   tests:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2022]
+        os: [
+          ubuntu-latest, 
+          # macos-latest, 
+          # windows-2022,
+        ]
         compiler:
-          - llvm-13.0.0
+          # - llvm-13.0.0
           - gcc
           # you can specify the version after `-` like `llvm-13.0.0`.
         include:
