@@ -59,8 +59,13 @@ jobs:
           cd build
           cmake --build . --target move-mm-tests -j16
       
-      - name: Run Tests
+      - name: Run Tests (*nix)
+        if: ${{ !contains(matrix.os, 'windows')
         run: ./build/tests/move-mm-tests -r junit > tests/move-mm-tests.xml
+      
+      - name: Run Tests (Windows)
+        if: ${{ contains(matrix.os, 'windows')
+        run: ./build/tests/move-mm-tests.exe -r junit > tests/move-mm-tests.xml
       
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action/composite@v1
