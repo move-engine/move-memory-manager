@@ -55,7 +55,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake ../ -DCMAKE_BUILD_TYPE=Debug -DMOVE_MEMORY_MANAGER_WITH_TESTS=on
+          cmake ../ -DCMAKE_BUILD_TYPE=Debug -DMOVE_MEMORY_MANAGER_WITH_TESTS=on -DMOVE_MEMORY_MANAGER_CI=on
       
       - name: Build Tests
         run: |
