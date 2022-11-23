@@ -1,11 +1,8 @@
 # Used the following yaml as reference
 # https://github.com/xiaozhuai/test_github_actions/blob/1487cc732bf08a4e5a31b3551a3db7542730f8ae/.github/workflows/build-every-commit.yml
 name: Build and Test
-
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
 
 jobs:
