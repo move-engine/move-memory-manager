@@ -7,6 +7,7 @@ project(
 )
 
 if (MOVE_MEMORY_MANAGER_CI)
+    message(STATUS "Writing package version to ${CMAKE_CURRENT_SOURCE_DIR}/package_version.txt")
     write_file("${CMAKE_CURRENT_SOURCE_DIR}/package_version.txt" "v${CMAKE_PROJECT_VERSION}")
 endif()
 

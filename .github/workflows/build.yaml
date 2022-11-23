@@ -74,7 +74,7 @@ jobs:
         if: ${{ contains(matrix.os, 'ubuntu') && contains(matrix.compiler, 'gcc') }}
         with:
           name: package-version
-          path: package-version.txt
+          path: package_version.txt
       
   tag-version:
     runs-on: ubuntu-latest
