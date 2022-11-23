@@ -9,7 +9,7 @@ on:
     branches: [main]
 
 jobs:
-  build-gcc:
+  tests:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2022]
