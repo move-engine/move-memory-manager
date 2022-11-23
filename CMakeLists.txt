@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 set (CMAKE_CXX_STANDARD 17)
-project(move-memory-manager LANGUAGES C CXX)
+project(
+    move-memory-manager
+    LANGUAGES C CXX
+    VERSION 0.0.1
+)
+
+if (MOVE_MEMORY_MANAGER_CI)
+    write_file("${CMAKE_CURRENT_SOURCE_DIR}/package_version.txt" "v${CMAKE_PROJECT_VERSION}")
+endif()
 
 add_subdirectory(3rdParty)
 

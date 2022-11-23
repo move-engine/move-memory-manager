@@ -56,7 +56,11 @@ jobs:
           mkdir build
           cd build
           cmake ../ -DCMAKE_BUILD_TYPE=Debug -DMOVE_MEMORY_MANAGER_WITH_TESTS=on
-    
+      
+      - name: Set Tag Output
+        id: set-tag
+        run:  echo "::set-output name=tag_name::$(cat package_version.txt)"
+
       - name: Build Tests
         run: |
           cd build
@@ -69,3 +73,17 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action/composite@v1
         with:
           files: tests/**/*.xml
+      
+      - name: Create Tag
+        uses: actions/github-script@v3
+        env:
+            TAG: ${{ steps.set-tag.outputs.tag_name }}
+        with:
+            github-token: ${{ github.token }}
+            script: |
+              github.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              ref: "refs/tags/${{ steps.set-tag.outputs.tag_name }}",
+                sha: context.sha
+              })
