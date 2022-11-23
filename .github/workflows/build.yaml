@@ -15,9 +15,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-2022]
         compiler:
           - llvm-13.0.0
-          - gcc-11.0.0
-          - gcc-10.0.0
-          - gcc-9.0.0
+          - gcc
           # you can specify the version after `-` like `llvm-13.0.0`.
         include:
           - os: "windows-2022"
