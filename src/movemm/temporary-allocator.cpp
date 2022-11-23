@@ -11,7 +11,7 @@ using vec = std::vector<T, movemm::stl_allocator<T>>;
 
 template <typename K, typename V>
 using umap = std::unordered_map<K, V, std::hash<K>, std::equal_to<K>,
-    movemm::stl_allocator<std::pair<K, V>>>;
+    movemm::stl_allocator<std::pair<const K, V>>>;
 
 class tagged_heap_global;
 
