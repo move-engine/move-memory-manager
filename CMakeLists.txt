@@ -3,7 +3,7 @@ set (CMAKE_CXX_STANDARD 17)
 project(
     move-memory-manager
     LANGUAGES C CXX
-    VERSION 0.0.2
+    VERSION 0.0.3
 )
 
 if (MOVE_MEMORY_MANAGER_CI)
