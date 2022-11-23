@@ -21,6 +21,9 @@ jobs:
         include:
           - os: "windows-2022"
             compiler: "msvc"
+        exclude:
+          - os: "windows-2022"
+            compiler: [llvm-13.0.0, gcc]
     runs-on: ${{ matrix.os }}
     env:
       CPM_SOURCE_CACHE: ~/.cpm/
