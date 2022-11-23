@@ -60,7 +60,7 @@ jobs:
           cmake --build . --target move-mm-tests -j16
       
       - name: Run Tests (*nix)
-        if: ${{ contains(matrix.os, 'windows') }}
+        if: ${{ !contains(matrix.os, 'windows') }}
         run: ./build/tests/move-mm-tests -r junit > tests/move-mm-tests.xml
       
       - name: Run Tests (Windows)
