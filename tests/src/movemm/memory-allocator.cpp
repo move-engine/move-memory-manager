@@ -10,7 +10,7 @@ SCENARIO("Testing the C allocator API")
 {
     GIVEN("An empty stack array of pointers")
     {
-        void* generated[1000];
+        void* generated[100];
         memset(generated, 0, sizeof(generated));
 
         movemm_statistics_t start_stats;
@@ -18,7 +18,7 @@ SCENARIO("Testing the C allocator API")
 
         INFO("Total memory mapped = " << start_stats.mapped);
 
-        WHEN("1000 allocations are made")
+        WHEN("100 allocations are made")
         {
             for (size_t i = 0; i < sizeof(generated) / sizeof(generated[0]);
                  ++i)
@@ -61,8 +61,9 @@ SCENARIO("Testing stack allocations")
 {
     GIVEN("A zero'd out stack allocated string")
     {
-        char* data = (char*)movemm_stack_alloc(64);
-        memset(data, 0, 64);
+        constexpr size_t alloc = 64;
+        char* data = (char*)movemm_stack_alloc(alloc);
+        memset(data, 0, alloc);
 
         WHEN("Operations on that string should be valid")
         {
