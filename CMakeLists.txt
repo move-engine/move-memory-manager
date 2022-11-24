@@ -3,7 +3,7 @@ set (CMAKE_CXX_STANDARD 17)
 project(
     move-memory-manager
     LANGUAGES C CXX
-    VERSION 0.1.3
+    VERSION 0.1.4
 )
 
 if (MOVE_MEMORY_MANAGER_CI)
@@ -32,6 +32,15 @@ if (MOVE_MEMORY_MANAGER_SHARED)
 else()
     add_library(move-mm STATIC ${MOVE_MEMORY_MANAGER_SOURCES})
     target_compile_definitions(move-mm PUBLIC -DMOVEMM_STATIC=1)
+endif()
+
+
+if (WIN32)
+    add_compile_definitions(MOVEMM_WINDOWS=1)
+elseif (UNIX)
+    add_compile_definitions(MOVEMM_UNIX=1)
+else()
+    message(FATAL_ERROR "OS is not supported")
 endif()
 
 target_link_libraries(move-mm PUBLIC rpmalloc)

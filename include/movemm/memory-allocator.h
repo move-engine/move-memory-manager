@@ -9,6 +9,8 @@
 MOVEMM_EXPORT void* movemm_alloc(size_t bytes);
 MOVEMM_EXPORT void movemm_free(void* ptr);
 
+MOVEMM_EXPORT void movemm_thread_collect();
+
 typedef struct
 {
     // Current amount of virtual memory mapped, all of which might not have been
@@ -50,6 +52,12 @@ MOVEMM_EXPORT void movemm_destroy_heap(movemm_heap_t);
 MOVEMM_EXPORT void* movemm_heap_alloc(movemm_heap_t heap, size_t bytes);
 MOVEMM_EXPORT void movemm_heap_free(movemm_heap_t heap, void* ptr);
 
+#if defined(MOVEMM_WINDOWS)
+#define movemm_stack_alloc(bytes) _alloca(bytes)
+#elif defined(MOVEMM_UNIX)
+#define movemm_stack_alloc(bytes) alloca(bytes)
+#endif
+
 #ifdef __cplusplus
 namespace movemm
 {
@@ -86,4 +94,10 @@ MOVEMM_EXPORT void movemm_register_destructor(
     movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor);
 
 MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_heap_tag_t tag);
+
+MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_storage();
+
+MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_tag_storage(
+    movemm_heap_tag_t tag);
+
 #endif

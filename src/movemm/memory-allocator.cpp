@@ -39,7 +39,11 @@ struct heap_initializer
 heap_initializer::heap_initializer()
 {
     // spdlog::info("Initializing rpmalloc");
-    rpmalloc_initialize();
+    rpmalloc_config_t cfg = {0};
+    cfg.enable_huge_pages = 1;
+    cfg.page_name = "MMM_P";
+    cfg.huge_page_name = "MMM_HP";
+    rpmalloc_initialize_config(&cfg);
 }
 
 heap_initializer::~heap_initializer()
@@ -73,6 +77,11 @@ MOVEMM_EXPORT void movemm_free(void* memory)
     _heapThreadInfo.noop();
 
     rpfree(memory);
+}
+
+MOVEMM_EXPORT void movemm_thread_collect()
+{
+    rpmalloc_thread_collect();
 }
 
 MOVEMM_EXPORT void movemm_get_statistics(movemm_statistics_t* statistics)

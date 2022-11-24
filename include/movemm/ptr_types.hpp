@@ -51,6 +51,7 @@ namespace movemm
             if (_data)
             {
                 mmdelete(_data);
+                _data = 0;
                 return true;
             }
             return false;
@@ -66,7 +67,17 @@ namespace movemm
             return _data;
         }
 
+        inline bool valid() const
+        {
+            return _data;
+        }
+
     public:
+        inline operator bool() const
+        {
+            return valid();
+        }
+
         inline T* operator->()
         {
             return _data;
@@ -85,11 +96,6 @@ namespace movemm
         inline const T& operator*() const
         {
             return *_data;
-        }
-
-        inline operator bool() const
-        {
-            return _data;
         }
 
     private:

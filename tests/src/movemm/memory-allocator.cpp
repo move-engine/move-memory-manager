@@ -1,23 +1,74 @@
+#include <cstddef>
+#include <cstring>
 
 #include <catch2/catch.hpp>
 
 #include <movemm/memory-allocator.h>
+#include <string.h>
 
-SCENARIO("Testing the memory allocator API")
+SCENARIO("Testing the C allocator API")
 {
-    // TODO: Write tests for the memory allocator
-}
-
-#if defined(MOVE_ENABLE_TAGGED_HEAP)
-SCENARIO("Testing tagged heap")
-{
-    GIVEN("A tagged heap tag and an ")
+    GIVEN("An empty stack array of pointers")
     {
-        movemm_heap_tag_t tag = {100};
+        void* generated[1000];
+        memset(generated, 0, sizeof(generated));
 
-        WHEN("An allocation is made")
+        movemm_statistics_t start_stats;
+        movemm_get_statistics(&start_stats);
+
+        INFO("Total memory mapped = " << start_stats.mapped);
+
+        WHEN("1000 allocations are made")
         {
+            for (size_t i = 0; i < sizeof(generated) / sizeof(generated[0]);
+                 ++i)
+            {
+                generated[i] = movemm_alloc(1024 * 1024);
+            }
+
+            THEN("All allocations should be valid")
+            {
+                for (size_t i = 0; i < sizeof(generated) / sizeof(generated[0]);
+                     ++i)
+                {
+                    REQUIRE(generated[i] != 0);
+                }
+            }
+
+            AND_THEN(
+                "The amount of mapped memory should be higher than it was at "
+                "the start")
+            {
+                movemm_statistics_t cur_stats;
+                movemm_get_statistics(&cur_stats);
+
+                REQUIRE(cur_stats.mapped > start_stats.mapped);
+            }
+
+            AND_WHEN("All of the allocations are freed")
+            {
+                for (size_t i = 0; i < sizeof(generated) / sizeof(generated[0]);
+                     ++i)
+                {
+                    REQUIRE_NOTHROW(movemm_free(generated[i]));
+                }
+            }
         }
     }
 }
-#endif
+
+SCENARIO("Testing stack allocations")
+{
+    GIVEN("A zero'd out stack allocated string")
+    {
+        char* data = (char*)movemm_stack_alloc(64);
+        memset(data, 0, 64);
+
+        WHEN("Operations on that string should be valid")
+        {
+            const static char* tstr = "This is a test";
+            REQUIRE_NOTHROW(strcpy(data, tstr));
+            REQUIRE(!strcmp(data, tstr));
+        }
+    }
+}

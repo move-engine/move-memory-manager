@@ -1,9 +1,12 @@
+#include <movemm/memory-allocator.h>
+
+#if defined(MOVE_ENABLE_TAGGED_HEAP)
 #include <functional>
+#include <iostream>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
 
-#include <movemm/memory-allocator.h>
 #include <movemm/stl_allocator.hpp>
 
 template <typename T>
@@ -34,12 +37,11 @@ struct registered_tagged_heap_destructor
 
 struct tagged_heap_page
 {
-    tagged_heap_page() : nextOffset(0)
-    {
-    }
-
     void* allocate(size_t bytes)
     {
+        // Don't allow it to allocate beyond the page boundary
+        if (nextOffset + bytes >= allocationSize) return 0;
+
         auto ptr = buffer + nextOffset;
 
         // Always 8 byte aligned
@@ -54,12 +56,12 @@ struct tagged_heap_page
     char buffer[];
 };
 
-constexpr size_t tagged_heap_page_size = 4 * 1024 * 1024;
+constexpr size_t tagged_heap_page_size = 2 * 1024 * 1024;
 constexpr size_t compute_required_page_size_for_alloc(size_t alloc)
 {
     // We store the tagged_heap_page at the head of the page, so we need to
-    // ensure that it fits
-    return ((sizeof(tagged_heap_page) + alloc) / tagged_heap_page_size + 1) *
+    // ensure that it fits.
+    return (((sizeof(tagged_heap_page) + alloc) / tagged_heap_page_size) + 1) *
            tagged_heap_page_size;
 }
 
@@ -82,13 +84,15 @@ struct tagged_heap_tag_storage
         {
             if (_nextPage >= _pages.size())
             {
+                auto allocSize = compute_required_page_size_for_alloc(bytes);
                 // Allocate the next page
                 auto ptr = reinterpret_cast<tagged_heap_page*>(
-                    movemm_alloc(sizeof(tagged_heap_page) +
-                                 compute_required_page_size_for_alloc(bytes)));
+                    movemm_alloc(allocSize));
 
                 // Initialize the page
-                new (ptr) tagged_heap_page();
+                auto pg = new (ptr) tagged_heap_page();
+                pg->nextOffset = 0;
+                pg->allocationSize = allocSize;
                 _pages.push_back(ptr);
             }
 
@@ -96,6 +100,16 @@ struct tagged_heap_tag_storage
             res = tgPage->allocate(bytes);
 
             if (!res) ++_nextPage;
+        }
+        return res;
+    }
+
+    size_t total_allocated()
+    {
+        size_t res = 0;
+        for (auto& it : _pages)
+        {
+            if (it) res += it->allocationSize;
         }
         return res;
     }
@@ -163,8 +177,31 @@ public:
         std::unique_lock<std::mutex> lock(_mutex);
         if (_tagStorage.count(tag))
         {
+            std::cout << "Erasing tag " << tag.tag << '\n';
             _tagStorage.erase(tag);
+            std::cout << "tag storage count == " << _tagStorage.size() << '\n';
         }
+    }
+
+    size_t total_cache_size()
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        size_t res = 0;
+        for (auto& storage : _tagStorage)
+        {
+            res += storage.second.total_allocated();
+        }
+        return res;
+    }
+
+    size_t tag_cache_size(movemm_heap_tag_t tag)
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        if (_tagStorage.count(tag))
+        {
+            return _tagStorage[tag].total_allocated();
+        }
+        return 0;
     }
 
 private:
@@ -178,10 +215,9 @@ private:
     }
 
 private:
-    tagged_heap_global* _parent;
-    std::mutex _mutex;
-
     umap<movemm_heap_tag_t, tagged_heap_tag_storage> _tagStorage;
+    std::mutex _mutex;
+    tagged_heap_global* _parent;
 };
 
 class tagged_heap_global
@@ -189,6 +225,28 @@ class tagged_heap_global
 public:
     void register_tls(tagged_heap_tls* tls);
     void deregister_tls(tagged_heap_tls* tls);
+
+    size_t get_current_storage()
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        size_t res = 0;
+        for (auto& it : _threadLocal)
+        {
+            res += it->total_cache_size();
+        }
+        return res;
+    }
+
+    size_t get_current_tag_storage(movemm_heap_tag_t tag)
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        size_t res = 0;
+        for (auto& it : _threadLocal)
+        {
+            res += it->tag_cache_size(tag);
+        }
+        return res;
+    }
 
 public:
     void register_destructor(
@@ -279,6 +337,9 @@ thread_local temp_tls_container tls_container;
 MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
     movemm_heap_tag_t tag, size_t bytes)
 {
+    std::cout << "Allocating " << bytes << " bytes from tag " << tag.tag
+              << '\n';
+
     return tls_container.tls.allocate(tag, bytes);
 }
 
@@ -292,3 +353,15 @@ MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_heap_tag_t tag)
 {
     return s_TempHeap.free_tag(tag);
 }
+
+MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_storage()
+{
+    return s_TempHeap.get_current_storage();
+}
+
+MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_tag_storage(
+    movemm_heap_tag_t tag)
+{
+    return s_TempHeap.get_current_tag_storage(tag);
+}
+#endif
