@@ -66,14 +66,14 @@ jobs:
       
       - name: Run Tests (*nix)
         if: ${{ !contains(matrix.os, 'windows') }}
-        run: ./build/tests/move-mm-tests -r junit > tests/move-mm-tests.xml
+        run: ./build/tests/move-mm-tests -r xml > tests/move-mm-tests.xml
       
       - name: Run Tests (Windows)
         if: ${{ contains(matrix.os, 'windows') }}
-        run: ./build/tests/Debug/move-mm-tests.exe -r junit > tests/move-mm-tests.xml
+        run: ./build/tests/Debug/move-mm-tests.exe -r xml > tests/move-mm-tests.xml
       
       - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action/composite@v1
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2.2.0
         with:
           files: tests/**/*.xml
 

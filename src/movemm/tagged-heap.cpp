@@ -177,9 +177,7 @@ public:
         std::unique_lock<std::mutex> lock(_mutex);
         if (_tagStorage.count(tag))
         {
-            std::cout << "Erasing tag " << tag.tag << '\n';
             _tagStorage.erase(tag);
-            std::cout << "tag storage count == " << _tagStorage.size() << '\n';
         }
     }
 
@@ -337,9 +335,6 @@ thread_local temp_tls_container tls_container;
 MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
     movemm_heap_tag_t tag, size_t bytes)
 {
-    std::cout << "Allocating " << bytes << " bytes from tag " << tag.tag
-              << '\n';
-
     return tls_container.tls.allocate(tag, bytes);
 }
 
