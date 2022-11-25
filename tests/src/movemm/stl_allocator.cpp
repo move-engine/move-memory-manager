@@ -3,7 +3,7 @@
 
 #include <movemm/stl_allocator.hpp>
 
-SCENARIO("Testing STL allocator")
-{
-    
-}
+// SCENARIO("Testing STL allocator")
+// {
+
+// }
