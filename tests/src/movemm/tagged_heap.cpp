@@ -1,8 +1,8 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <movemm/memory-allocator.h>
 
-#if defined(MOVE_ENABLE_TAGGED_HEAP) && false
+#if defined(MOVE_ENABLE_TAGGED_HEAP)
 SCENARIO("Testing tagged heap")
 {
     GIVEN("A tagged heap tag")

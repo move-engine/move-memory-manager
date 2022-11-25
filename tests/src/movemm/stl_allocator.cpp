@@ -1,9 +1,8 @@
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <movemm/stl_allocator.hpp>
 
-// SCENARIO("Testing STL allocator")
-// {
-
-// }
+SCENARIO("Testing STL allocator")
+{
+}
