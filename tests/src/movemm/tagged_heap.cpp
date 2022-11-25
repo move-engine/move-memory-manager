@@ -2,7 +2,7 @@
 
 #include <movemm/memory-allocator.h>
 
-#if defined(MOVE_ENABLE_TAGGED_HEAP)
+#if defined(MOVE_ENABLE_TAGGED_HEAP) && false
 SCENARIO("Testing tagged heap")
 {
     GIVEN("A tagged heap tag")

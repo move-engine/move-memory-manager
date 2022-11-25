@@ -57,19 +57,19 @@ SCENARIO("Testing the C allocator API")
     }
 }
 
-// SCENARIO("Testing stack allocations")
-// {
-//     GIVEN("A zero'd out stack allocated string")
-//     {
-//         constexpr size_t alloc = 64;
-//         char* data = (char*)movemm_stack_alloc(alloc);
-//         memset(data, 0, alloc);
+SCENARIO("Testing stack allocations")
+{
+    GIVEN("A zero'd out stack allocated string")
+    {
+        constexpr size_t alloc = 64;
+        char* data = (char*)movemm_stack_alloc(alloc);
+        memset(data, 0, alloc);
 
-//         WHEN("Operations on that string should be valid")
-//         {
-//             const static char* tstr = "This is a test";
-//             REQUIRE_NOTHROW(strcpy(data, tstr));
-//             REQUIRE(!strcmp(data, tstr));
-//         }
-//     }
-// }
+        WHEN("Operations on that string should be valid")
+        {
+            const static char* tstr = "This is a test";
+            REQUIRE_NOTHROW(strcpy(data, tstr));
+            REQUIRE(!strcmp(data, tstr));
+        }
+    }
+}
