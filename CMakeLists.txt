@@ -3,7 +3,7 @@ set (CMAKE_CXX_STANDARD 17)
 project(
     move-memory-manager
     LANGUAGES C CXX
-    VERSION 0.1.6
+    VERSION 0.1.7
 )
 
 if (MOVE_MEMORY_MANAGER_CI)
@@ -36,9 +36,9 @@ endif()
 
 
 if (WIN32)
-    add_compile_definitions(MOVEMM_WINDOWS=1)
+    target_compile_definitions(move-mm PUBLIC -DMOVEMM_WINDOWS=1)
 elseif (UNIX)
-    add_compile_definitions(MOVEMM_UNIX=1)
+target_compile_definitions(move-mm PUBLIC -DMOVEMM_UNIX=1)
 else()
     message(FATAL_ERROR "OS is not supported")
 endif()
