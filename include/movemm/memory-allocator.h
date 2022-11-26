@@ -2,7 +2,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <utility>
 #include "export.h"
 
 // Basic allocation functions
@@ -59,6 +58,7 @@ MOVEMM_EXPORT void movemm_heap_free(movemm_heap_t heap, void* ptr);
 #endif
 
 #ifdef __cplusplus
+#include <utility>
 namespace movemm
 {
     template <typename T, typename... Args>
