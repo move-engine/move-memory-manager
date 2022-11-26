@@ -12,10 +12,10 @@ jobs:
         os: [
           ubuntu-latest, 
           # macos-latest, 
-          windows-2022,
+          # windows-2022,
         ]
         compiler:
-          - llvm-13.0.0
+          # - llvm-13.0.0
           - gcc
           # you can specify the version after `-` like `llvm-13.0.0`.
         include:
@@ -49,9 +49,9 @@ jobs:
           compiler: ${{ matrix.compiler }}
           vcvarsall: ${{ contains(matrix.os, 'windows') }}
           cmake: true
-          ninja: true
-          cppcheck: true
-          clangtidy: true
+          # ninja: true
+          # cppcheck: true
+          # clangtidy: true
 
       - name: Configure build environment
         run: |
@@ -85,7 +85,7 @@ jobs:
       
   tag-version:
     runs-on: ubuntu-latest
-    # needs: tests
+    needs: tests
     steps:
       - uses: actions/download-artifact@v2
         with:
