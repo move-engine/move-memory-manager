@@ -82,9 +82,13 @@ struct tagged_heap_tag_storage
 
         while (!res)
         {
+            // If all of our pages are full, we need to allocate a new one
             if (_nextPage >= _pages.size())
             {
+                // Compute the size of the next page.  This is the smallest
+                // multiple of the page size that can contain the allocation.
                 auto allocSize = compute_required_page_size_for_alloc(bytes);
+
                 // Allocate the next page
                 auto ptr = reinterpret_cast<tagged_heap_page*>(
                     movemm_alloc(allocSize));
@@ -96,9 +100,11 @@ struct tagged_heap_tag_storage
                 _pages.push_back(ptr);
             }
 
+            // Attempt to allocate from the latest page
             auto& tgPage = _pages[_nextPage];
             res = tgPage->allocate(bytes);
 
+            // If we failed to allocate, move to the next page
             if (!res) ++_nextPage;
         }
         return res;
@@ -338,7 +344,7 @@ MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
     return tls_container.tls.allocate(tag, bytes);
 }
 
-MOVEMM_EXPORT void movemm_register_destructor(
+MOVEMM_EXPORT void movemm_register_tagged_heap_destructor(
     movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor)
 {
     s_TempHeap.register_destructor(tag, ptr, destructor);

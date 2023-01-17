@@ -3,7 +3,7 @@ set (CMAKE_CXX_STANDARD 17)
 project(
     move-memory-manager
     LANGUAGES C CXX
-    VERSION 0.1.7
+    VERSION 0.2.0
 )
 
 if (MOVE_MEMORY_MANAGER_CI)
@@ -43,10 +43,16 @@ else()
     message(FATAL_ERROR "OS is not supported")
 endif()
 
-target_link_libraries(move-mm PUBLIC rpmalloc)
+target_link_libraries(move-mm PUBLIC mimalloc)
 target_include_directories(move-mm PUBLIC "include")
 
+option(MOVE_MEMORY_MANAGER_TRACKING_MODE "Adds a global allocator lock and tracks all allocations, validating all calls to movemm_free.  Tracking mode will be SIGNIFICANTLY slower than non-tracking mode." off)
 option(MOVE_MEMORY_MANAGER_WITH_TESTS "Determines whether or not to build the test suite" off)
+
+if (MOVE_MEMORY_MANAGER_TRACKING_MODE)
+    target_compile_definitions(move-mm PUBLIC -DMOVEMM_TRACKING_MODE=1)
+endif()
+
 if (MOVE_MEMORY_MANAGER_WITH_TESTS)
     add_subdirectory(tests)
 endif()
