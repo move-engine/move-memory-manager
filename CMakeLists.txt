@@ -43,7 +43,7 @@ else()
     message(FATAL_ERROR "OS is not supported")
 endif()
 
-target_link_libraries(move-mm PUBLIC mimalloc)
+target_link_libraries(move-mm PUBLIC mimalloc-static)
 target_include_directories(move-mm PUBLIC "include")
 
 option(MOVE_MEMORY_MANAGER_TRACKING_MODE "Adds a global allocator lock and tracks all allocations, validating all calls to movemm_free.  Tracking mode will be SIGNIFICANTLY slower than non-tracking mode." off)
