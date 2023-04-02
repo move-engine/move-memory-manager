@@ -1,6 +1,5 @@
 #include <movemm/memory-allocator.h>
 
-#if defined(MOVE_ENABLE_TAGGED_HEAP)
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -227,6 +226,9 @@ private:
 class tagged_heap_global
 {
 public:
+    tagged_heap_global();
+
+public:
     void register_tls(tagged_heap_tls* tls);
     void deregister_tls(tagged_heap_tls* tls);
 
@@ -304,6 +306,10 @@ tagged_heap_tls::~tagged_heap_tls()
     }
 }
 
+tagged_heap_global::tagged_heap_global()
+{
+}
+
 void tagged_heap_global::register_tls(tagged_heap_tls* tls)
 {
     std::unique_lock<std::mutex> lock(_mutex);
@@ -326,10 +332,15 @@ void tagged_heap_global::deregister_tls(tagged_heap_tls* tls)
         "Failed to deregister TLS for temporary allocator");
 }
 
-static tagged_heap_global s_TempHeap;
+static tagged_heap_global& _temp_heap()
+{
+    static tagged_heap_global s_TempHeap;
+    return s_TempHeap;
+}
+
 struct temp_tls_container
 {
-    temp_tls_container() : tls(s_TempHeap)
+    temp_tls_container() : tls(_temp_heap())
     {
     }
 
@@ -347,22 +358,21 @@ MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
 MOVEMM_EXPORT void movemm_register_tagged_heap_destructor(
     movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor)
 {
-    s_TempHeap.register_destructor(tag, ptr, destructor);
+    _temp_heap().register_destructor(tag, ptr, destructor);
 }
 
 MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_heap_tag_t tag)
 {
-    return s_TempHeap.free_tag(tag);
+    return _temp_heap().free_tag(tag);
 }
 
 MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_storage()
 {
-    return s_TempHeap.get_current_storage();
+    return _temp_heap().get_current_storage();
 }
 
 MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_tag_storage(
     movemm_heap_tag_t tag)
 {
-    return s_TempHeap.get_current_tag_storage(tag);
+    return _temp_heap().get_current_tag_storage(tag);
 }
-#endif
