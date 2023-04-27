@@ -47,8 +47,6 @@ typedef struct
     uint64_t tag;
 } movemm_heap_tag_t;
 
-#define MOVE_ENABLE_TAGGED_HEAP
-#if defined(MOVE_ENABLE_TAGGED_HEAP)
 MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
     movemm_heap_tag_t tag, size_t bytes);
 
@@ -62,5 +60,3 @@ MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_storage();
 
 MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_tag_storage(
     movemm_heap_tag_t tag);
-
-#endif
