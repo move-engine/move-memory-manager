@@ -10,21 +10,27 @@ namespace movemm
     template <typename T>
     class unique_ptr
     {
-    public:
-        typedef void (*deallocate_fn_t)(T*);
+    private:
+        typedef void (*delete_fn_t)(void*);
+        static void anon_deallocate(void* ptr)
+        {
+            mmdelete(static_cast<T*>(ptr));
+        }
 
     public:
-        inline unique_ptr() : _data(0)
+        inline unique_ptr() : _data(0), _deleter(&anon_deallocate)
         {
         }
 
-        inline unique_ptr(T* ptrToManage) : _data(ptrToManage)
+        inline unique_ptr(T* ptrToManage)
+            : _data(ptrToManage), _deleter(&anon_deallocate)
         {
         }
 
         inline unique_ptr(const unique_ptr<T>& rhs) = delete;
 
-        inline unique_ptr(unique_ptr<T>&& rhs) : _data(rhs._data)
+        inline unique_ptr(unique_ptr<T>&& rhs)
+            : _data(rhs._data), _deleter(rhs._deleter)
         {
             // static_assert(
             //     std::is_same_v<T, R> || std::is_assignable_v<T, R>,
@@ -43,14 +49,14 @@ namespace movemm
         inline void create(Args&&... args)
         {
             destroy();
-            _data = movemm::mmnew<T>(std::forward<Args>(args)...);
+            _data = mmnew<T>(std::forward<Args>(args)...);
         }
 
         inline bool destroy()
         {
             if (_data)
             {
-                mmdelete(_data);
+                _deleter(_data);
                 _data = 0;
                 return true;
             }
@@ -109,12 +115,13 @@ namespace movemm
 
     private:
         T* _data;
+        delete_fn_t _deleter;
     };
 
     template <typename T, typename... Args>
     inline unique_ptr<T> make_unique(Args&&... args)
     {
-        return unique_ptr<T>(movemm::mmnew<T>(std::forward<Args>(args)...));
+        return unique_ptr<T>(mmnew<T>(std::forward<Args>(args)...));
     }
 
     template <typename T>
@@ -229,8 +236,7 @@ namespace movemm
         inline T& create(Args&&... args)
         {
             destroy();
-            return (_data = movemm::mmnew<refcounted_data>(
-                        std::forward<Args>(args)...))
+            return (_data = mmnew<refcounted_data>(std::forward<Args>(args)...))
                 ->value;
         }
 
@@ -240,7 +246,7 @@ namespace movemm
             {
                 if ((--_data->refcount) == 0)
                 {
-                    movemm::mmdelete<refcounted_data>(_data);
+                    mmdelete<refcounted_data>(_data);
                 }
                 _data = 0;
             }
