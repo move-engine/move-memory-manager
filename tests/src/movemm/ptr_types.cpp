@@ -2,6 +2,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <movemm/ptr_types.hpp>
+#include "catch2/catch_test_macros.hpp"
 
 SCENARIO("Testing pointer types")
 {
@@ -23,6 +24,38 @@ SCENARIO("Testing pointer types")
                 REQUIRE(!ptr.valid());
                 REQUIRE(!ptr.get());
             }
+        }
+    }
+
+    GIVEN("A unique pointer for a type with a subtype")
+    {
+        struct parent
+        {
+            virtual ~parent()
+            {
+            }
+
+            float x;
+        };
+
+        struct derived : public parent
+        {
+            float y;
+        };
+
+        // THEN("Move construction should work")
+        // {
+        //     auto derivedPtr = movemm::unique_ptr<derived>();
+        //     REQUIRE_NOTHROW(derivedPtr->y = 100);
+
+        //     movemm::unique_ptr<parent> parentInit(std::move(derivedPtr));
+        //     REQUIRE_NOTHROW(parentInit->x = 10);
+        // }
+
+        THEN("Move assignment should work")
+        {
+            movemm::unique_ptr<parent> uninitializedParentAssign;
+            uninitializedParentAssign = movemm::make_unique<derived>();
         }
     }
 

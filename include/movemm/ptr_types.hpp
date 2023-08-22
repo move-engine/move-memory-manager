@@ -10,28 +10,44 @@ namespace movemm
     template <typename T>
     class unique_ptr
     {
-    public:
-        typedef void (*deallocate_fn_t)(T*);
+        template <typename R>
+        friend class unique_ptr;
+
+    private:
+        typedef void (*delete_fn_t)(void*);
+        static void anon_deallocate(void* ptr)
+        {
+            mmdelete(static_cast<T*>(ptr));
+        }
 
     public:
-        inline unique_ptr() : _data(0)
+        inline unique_ptr() : _data(0), _deleter(&anon_deallocate)
         {
         }
 
-        inline unique_ptr(T* ptrToManage) : _data(ptrToManage)
+        inline unique_ptr(T* ptrToManage)
+            : _data(ptrToManage), _deleter(&anon_deallocate)
         {
         }
 
         inline unique_ptr(const unique_ptr<T>& rhs) = delete;
 
-        inline unique_ptr(unique_ptr<T>&& rhs) : _data(rhs._data)
+        inline unique_ptr(unique_ptr<T>&& rhs)
+            : _data(rhs._data), _deleter(rhs._deleter)
         {
-            // static_assert(
-            //     std::is_same_v<T, R> || std::is_assignable_v<T, R>,
-            //     "R must be assignable to T");
-
             rhs._data = 0;
         }
+
+        // template <typename R>
+        // inline unique_ptr(unique_ptr<R>&& rhs)
+        //     : _data(rhs._data), _deleter(rhs._deleter)
+        // {
+        //     static_assert(std::is_convertible<R*, T*>::value,
+        //         "Cannot convert unique_ptr to a different type");
+
+        //     rhs._data = 0;
+        //     rhs._deleter = 0;
+        // }
 
         inline ~unique_ptr()
         {
@@ -43,14 +59,14 @@ namespace movemm
         inline void create(Args&&... args)
         {
             destroy();
-            _data = movemm::mmnew<T>(std::forward<Args>(args)...);
+            _data = mmnew<T>(std::forward<Args>(args)...);
         }
 
         inline bool destroy()
         {
             if (_data)
             {
-                mmdelete(_data);
+                _deleter(_data);
                 _data = 0;
                 return true;
             }
@@ -104,17 +120,31 @@ namespace movemm
             destroy();
             _data = rhs._data;
             rhs._data = 0;
+            rhs._deleter = 0;
+            return *this;
+        }
+
+        template <typename R>
+        inline unique_ptr<T>& operator=(unique_ptr<R>&& rhs)
+        {
+            static_assert(std::is_convertible<R*, T*>::value,
+                "Cannot convert unique_ptr to a different type");
+
+            destroy();
+            _data = rhs._data;
+            rhs._data = 0;
             return *this;
         }
 
     private:
         T* _data;
+        delete_fn_t _deleter;
     };
 
     template <typename T, typename... Args>
     inline unique_ptr<T> make_unique(Args&&... args)
     {
-        return unique_ptr<T>(movemm::mmnew<T>(std::forward<Args>(args)...));
+        return unique_ptr<T>(mmnew<T>(std::forward<Args>(args)...));
     }
 
     template <typename T>
@@ -229,8 +259,7 @@ namespace movemm
         inline T& create(Args&&... args)
         {
             destroy();
-            return (_data = movemm::mmnew<refcounted_data>(
-                        std::forward<Args>(args)...))
+            return (_data = mmnew<refcounted_data>(std::forward<Args>(args)...))
                 ->value;
         }
 
@@ -240,7 +269,7 @@ namespace movemm
             {
                 if ((--_data->refcount) == 0)
                 {
-                    movemm::mmdelete<refcounted_data>(_data);
+                    mmdelete<refcounted_data>(_data);
                 }
                 _data = 0;
             }
