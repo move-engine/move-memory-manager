@@ -16,6 +16,26 @@ MOVEMM_EXPORT void movemm_destroy_heap(movemm_heap_t);
 
 MOVEMM_EXPORT void* movemm_heap_alloc(movemm_heap_t heap, size_t bytes);
 
+// Temporary allocations
+typedef struct
+{
+    uint64_t tag;
+} movemm_heap_tag_t;
+
+MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
+    movemm_heap_tag_t tag, size_t bytes);
+
+typedef void (*movemm_destructor_cb_t)(void*);
+MOVEMM_EXPORT void movemm_register_tagged_heap_destructor(
+    movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor);
+
+MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_heap_tag_t tag);
+
+MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_storage();
+
+MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_tag_storage(
+    movemm_heap_tag_t tag);
+
 #if defined(MOVEMM_WINDOWS)
 #define movemm_stack_alloc(bytes) _alloca(bytes)
 #elif defined(MOVEMM_UNIX)
@@ -38,25 +58,25 @@ namespace movemm
         ptr->~T();
         movemm_free(ptr);
     }
+
+    inline void alloc(size_t bytes)
+    {
+        movemm_alloc(bytes);
+    }
+
+    inline void free(void* ptr)
+    {
+        movemm_free(ptr);
+    }
+
+    inline void tagged_alloc(movemm_heap_tag_t tag, size_t bytes)
+    {
+        movemm_tagged_heap_alloc(tag, bytes);
+    }
+
+    inline void tagged_free(movemm_heap_tag_t tag)
+    {
+        movemm_tagged_heap_free(tag);
+    }
 }  // namespace movemm
 #endif
-
-// Temporary allocations
-typedef struct
-{
-    uint64_t tag;
-} movemm_heap_tag_t;
-
-MOVEMM_EXPORT void* movemm_tagged_heap_alloc(
-    movemm_heap_tag_t tag, size_t bytes);
-
-typedef void (*movemm_destructor_cb_t)(void*);
-MOVEMM_EXPORT void movemm_register_tagged_heap_destructor(
-    movemm_heap_tag_t tag, void* ptr, movemm_destructor_cb_t destructor);
-
-MOVEMM_EXPORT void movemm_tagged_heap_free(movemm_heap_tag_t tag);
-
-MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_storage();
-
-MOVEMM_EXPORT size_t movemm_tagged_heap_get_current_tag_storage(
-    movemm_heap_tag_t tag);
