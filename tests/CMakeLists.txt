@@ -15,7 +15,7 @@ target_include_directories(move-mm-tests PUBLIC ${MOVE_INCLUDES})
 if (Catch2_ADDED)
     message(STATUS Using existing catch2 library)
 else()
-    CPMAddPackage("gh:catchorg/Catch2@3.2.0")
+    CPMAddPackage("gh:catchorg/Catch2@3.5.2")
 endif()
 
 target_link_libraries(move-mm-tests PUBLIC Catch2WithMain move-mm)
