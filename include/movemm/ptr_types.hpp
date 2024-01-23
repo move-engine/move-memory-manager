@@ -38,16 +38,15 @@ namespace movemm
             rhs._data = 0;
         }
 
-        // template <typename R>
-        // inline unique_ptr(unique_ptr<R>&& rhs)
-        //     : _data(rhs._data), _deleter(rhs._deleter)
-        // {
-        //     static_assert(std::is_convertible<R*, T*>::value,
-        //         "Cannot convert unique_ptr to a different type");
+        template <typename R>
+        inline unique_ptr(unique_ptr<R>&& rhs)
+            : _data(rhs._data), _deleter(rhs._deleter)
+        {
+            static_assert(std::is_same_v<T, R> || std::is_assignable_v<T, R>,
+                "R must be assignable to T");
 
-        //     rhs._data = 0;
-        //     rhs._deleter = 0;
-        // }
+            rhs._data = 0;
+        }
 
         inline ~unique_ptr()
         {
@@ -211,11 +210,14 @@ namespace movemm
         T* _data;
     };
 
-    template <typename T>
-    class shared_ptr
+    namespace detail
     {
+        template <typename T>
         struct refcounted_data
         {
+            template <typename R>
+            friend class shared_ptr;
+
             template <typename... Args>
             inline refcounted_data(Args&&... args)
                 : value(std::forward<Args>(args)...), refcount(1)
@@ -229,6 +231,13 @@ namespace movemm
             T value;
             std::atomic_size_t refcount;
         };
+    }  // namespace detail
+
+    template <typename T>
+    class shared_ptr
+    {
+        template <typename R>
+        friend class shared_ptr;
 
     public:
         // Creates an invalid shared_ptr
@@ -249,6 +258,27 @@ namespace movemm
             rhs._data = 0;
         }
 
+        // template <typename R>
+        // inline shared_ptr(const shared_ptr<R>& rhs) : _data(rhs._data)
+        // {
+        //     static_assert(std::is_same_v<T, R> || std::is_assignable_v<T, R>,
+        //         "R must be assignable to T");
+
+        //     if (_data)
+        //     {
+        //         ++_data->refcount;
+        //     }
+        // }
+
+        // template <typename R>
+        // inline shared_ptr(shared_ptr<R>&& rhs) : _data(rhs._data)
+        // {
+        //     static_assert(std::is_same_v<T, R> || std::is_assignable_v<T, R>,
+        //         "R must be assignable to T");
+
+        //     rhs._data = 0;
+        // }
+
         inline ~shared_ptr()
         {
             destroy();
@@ -259,7 +289,8 @@ namespace movemm
         inline T& create(Args&&... args)
         {
             destroy();
-            return (_data = mmnew<refcounted_data>(std::forward<Args>(args)...))
+            return (_data = mmnew<detail::refcounted_data<T>>(
+                        std::forward<Args>(args)...))
                 ->value;
         }
 
@@ -269,7 +300,7 @@ namespace movemm
             {
                 if ((--_data->refcount) == 0)
                 {
-                    mmdelete<refcounted_data>(_data);
+                    mmdelete<detail::refcounted_data<T>>(_data);
                 }
                 _data = 0;
             }
@@ -282,7 +313,8 @@ namespace movemm
 
         inline T* get()
         {
-            return &_data->value;
+            if (_data) return &_data->value;
+            return 0;
         }
 
         inline T const* get() const
@@ -348,6 +380,40 @@ namespace movemm
             return *this;
         }
 
+        // template <typename R>
+        // inline shared_ptr<T>& operator=(const shared_ptr<R>& rhs)
+        // {
+        //     static_assert(std::is_same_v<T, R> || std::is_assignable_v<T, R>,
+        //         "R must be assignable to T");
+
+        //     if (_data != rhs._data)
+        //     {
+        //         destroy();
+
+        //         _data = rhs._data;
+        //         if (_data)
+        //         {
+        //             ++_data->refcount;
+        //         }
+        //     }
+        //     return *this;
+        // }
+
+        // template <typename R>
+        // inline shared_ptr<T>& operator=(shared_ptr<R>&& rhs)
+        // {
+        //     static_assert(std::is_same_v<T, R> || std::is_assignable_v<T, R>,
+        //         "R must be assignable to T");
+
+        //     if (_data != rhs._data)
+        //     {
+        //         destroy();
+        //         _data = rhs._data;
+        //         rhs._data = 0;
+        //     }
+        //     return *this;
+        // }
+
     public:
         inline bool operator==(const shared_ptr<T>& rhs) const
         {
@@ -360,7 +426,7 @@ namespace movemm
         }
 
     private:
-        refcounted_data* _data;
+        detail::refcounted_data<T>* _data;
     };
 
     template <typename T, typename... Args>
