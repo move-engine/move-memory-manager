@@ -189,10 +189,140 @@ SCENARIO("Testing pointer types")
                     {
                         REQUIRE(!ptr2);
                         REQUIRE(!ptr2.valid());
-                        REQUIRE(!ptr2.get());
+                        REQUIRE(ptr2.get() == 0);
                         REQUIRE(_count == 0);
                     }
                 }
+            }
+        }
+    }
+
+    GIVEN("A base and derived type")
+    {
+        class BaseType
+        {
+        public:
+            virtual ~BaseType()
+            {
+            }
+
+            virtual int dummy()
+            {
+                return 0;
+            }
+        };
+
+        class DerivedType : public BaseType
+        {
+        public:
+            virtual ~DerivedType()
+            {
+            }
+
+            virtual int dummy()
+            {
+                return 2;
+            }
+        };
+
+        AND_GIVEN("A shared pointer to the base type")
+        {
+            auto ptr = movemm::make_shared<BaseType>();
+            THEN(
+                "The pointer is not null, the refcount is 1, and the dummy "
+                "value returns correctly")
+            {
+                REQUIRE(ptr);
+                REQUIRE(ptr.valid());
+                REQUIRE(ptr.get());
+                REQUIRE(ptr.refcount() == 1);
+                REQUIRE(ptr->dummy() == 0);
+            }
+        }
+
+        AND_GIVEN("A shared pointer to the derived type")
+        {
+            auto ptr = movemm::make_shared<DerivedType>();
+            THEN(
+                "The pointer is not null, the refcount is 1, and the dummy "
+                "value returns correctly")
+            {
+                REQUIRE(ptr);
+                REQUIRE(ptr.valid());
+                REQUIRE(ptr.get());
+                REQUIRE(ptr.refcount() == 1);
+                REQUIRE(ptr->dummy() == 2);
+            }
+
+            // AND_WHEN("It is assigned to a shared pointer to the base type")
+            // {
+            //     movemm::shared_ptr<BaseType> base = ptr;
+            //     THEN(
+            //         "The pointer is not null, the refcount is 2, and the
+            //         dummy " "value returns correctly")
+            //     {
+            //         REQUIRE(base);
+            //         REQUIRE(base.valid());
+            //         REQUIRE(base.get());
+            //         REQUIRE(base.refcount() == 2);
+            //         REQUIRE(base->dummy() == 2);
+            //     }
+            // }
+        }
+
+        AND_GIVEN("A unique pointer to the base type")
+        {
+            auto ptr = movemm::make_unique<BaseType>();
+            THEN(
+                "The pointer is not null, the refcount is 1, and the dummy "
+                "value returns correctly")
+            {
+                REQUIRE(ptr);
+                REQUIRE(ptr.valid());
+                REQUIRE(ptr.get());
+                REQUIRE(ptr->dummy() == 0);
+            }
+        }
+
+        AND_GIVEN("A unique pointer to the derived type")
+        {
+            auto ptr = movemm::make_unique<DerivedType>();
+            THEN(
+                "The pointer is not null and the dummy value returns correctly")
+            {
+                REQUIRE(ptr);
+                REQUIRE(ptr.valid());
+                REQUIRE(ptr.get());
+                REQUIRE(ptr->dummy() == 2);
+            }
+
+            AND_WHEN("It is assigned to a unique pointer to the base type")
+            {
+                movemm::unique_ptr<BaseType> base = std::move(ptr);
+                THEN(
+                    "The pointer is not null and the dummy value returns "
+                    "correctly")
+                {
+                    REQUIRE(base);
+                    REQUIRE(base.valid());
+                    REQUIRE(base.get());
+                    REQUIRE(base->dummy() == 2);
+                }
+            }
+        }
+
+        AND_GIVEN(
+            "A unique pointer to the base type initialized with a derived type")
+        {
+            movemm::unique_ptr<BaseType> ptr =
+                movemm::make_unique<DerivedType>();
+            THEN(
+                "The pointer is not null and the dummy value returns correctly")
+            {
+                REQUIRE(ptr);
+                REQUIRE(ptr.valid());
+                REQUIRE(ptr.get());
+                REQUIRE(ptr->dummy() == 2);
             }
         }
     }
