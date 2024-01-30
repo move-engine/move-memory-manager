@@ -59,9 +59,9 @@ namespace movemm
         movemm_free(ptr);
     }
 
-    inline void alloc(size_t bytes)
+    inline void* alloc(size_t bytes)
     {
-        movemm_alloc(bytes);
+        return movemm_alloc(bytes);
     }
 
     inline void free(void* ptr)
@@ -69,9 +69,9 @@ namespace movemm
         movemm_free(ptr);
     }
 
-    inline void tagged_alloc(movemm_heap_tag_t tag, size_t bytes)
+    inline void* tagged_alloc(movemm_heap_tag_t tag, size_t bytes)
     {
-        movemm_tagged_heap_alloc(tag, bytes);
+        return movemm_tagged_heap_alloc(tag, bytes);
     }
 
     inline void tagged_free(movemm_heap_tag_t tag)
