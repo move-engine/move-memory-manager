@@ -77,9 +77,9 @@ namespace movemm
         return res;
     }
 
-    inline void alloc(size_t bytes)
+    inline void* alloc(size_t bytes)
     {
-        movemm_alloc(bytes);
+        return movemm_alloc(bytes);
     }
 
     inline void* realloc(void* memory, size_t bytes)
@@ -109,7 +109,7 @@ namespace movemm
 
     inline void* tagged_alloc(movemm_heap_tag_t tag, size_t bytes)
     {
-        movemm_tagged_heap_alloc(tag, bytes);
+        return movemm_tagged_heap_alloc(tag, bytes);
     }
 
     inline void tagged_free(movemm_heap_tag_t tag)
