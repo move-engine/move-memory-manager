@@ -22,6 +22,24 @@ MOVEMM_EXPORT void* movemm_alloc(size_t bytes)
     return res;
 }
 
+MOVEMM_EXPORT void* movemm_realloc(void* memory, size_t bytes)
+{
+#if defined(MOVEMM_TRACKING_MODE)
+    std::lock_guard<std::mutex> lock(_globalMutex);
+    auto it = _allocations.find(memory);
+#endif
+    auto res = mi_realloc(memory, bytes);
+
+#if defined(MOVEMM_TRACKING_MODE)
+    if (it != _allocations.end())
+    {
+        _allocations.erase(it);
+        _allocations.insert(res);
+    }
+#endif
+    return res;
+}
+
 MOVEMM_EXPORT void movemm_free(void* memory)
 {
     if (!memory) return;
@@ -37,6 +55,57 @@ MOVEMM_EXPORT void movemm_free(void* memory)
     _allocations.erase(it);
 #endif
     mi_free(memory);
+}
+
+MOVEMM_EXPORT void* movemm_aligned_alloc(size_t bytes, size_t alignment)
+{
+#if defined(MOVEMM_TRACKING_MODE)
+    std::lock_guard<std::mutex> lock(_globalMutex);
+#endif
+    auto res = mi_aligned_alloc(alignment, bytes);
+#if defined(MOVEMM_TRACKING_MODE)
+    _allocations.insert(res);
+#endif
+    return res;
+}
+
+MOVEMM_EXPORT void* movemm_aligned_realloc(
+    void* memory, size_t bytes, size_t alignment)
+{
+#if defined(MOVEMM_TRACKING_MODE)
+    std::lock_guard<std::mutex> lock(_globalMutex);
+    auto it = _allocations.find(memory);
+#endif
+    auto res = mi_realloc_aligned(memory, alignment, bytes);
+
+#if defined(MOVEMM_TRACKING_MODE)
+    if (it != _allocations.end())
+    {
+        _allocations.erase(it);
+        _allocations.insert(res);
+    }
+#endif
+    return res;
+}
+
+MOVEMM_EXPORT void movemm_aligned_free(void* memory, size_t alignment)
+{
+    if (!memory) return;
+
+#if defined(MOVEMM_TRACKING_MODE)
+    std::lock_guard<std::mutex> lock(_globalMutex);
+    auto it = _allocations.find(memory);
+#endif
+    mi_free_aligned(memory, alignment);
+
+#if defined(MOVEMM_TRACKING_MODE)
+    if (it == _allocations.end())
+    {
+        throw std::runtime_error(
+            "Attempted to free memory that was not allocated by movemm");
+    }
+    _allocations.erase(it);
+#endif
 }
 
 // MOVEMM_EXPORT void movemm_get_statistics(movemm_statistics_t* statistics)

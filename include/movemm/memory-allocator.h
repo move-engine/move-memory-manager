@@ -6,7 +6,13 @@
 
 // Basic allocation functions
 MOVEMM_EXPORT void* movemm_alloc(size_t bytes);
+MOVEMM_EXPORT void* movemm_realloc(void* memory, size_t bytes);
 MOVEMM_EXPORT void movemm_free(void* ptr);
+
+MOVEMM_EXPORT void* movemm_aligned_alloc(size_t bytes, size_t alignment);
+MOVEMM_EXPORT void* movemm_aligned_realloc(
+    void* memory, size_t bytes, size_t alignment);
+MOVEMM_EXPORT void movemm_aligned_free(void* ptr, size_t alignment);
 
 // Separate heaps.  These can only be freed in their entirety - not individual
 // allocations.
@@ -58,10 +64,27 @@ namespace movemm
         ptr->~T();
         movemm_free(ptr);
     }
+    template <typename T, typename... Args>
+    inline T* tagged_new(movemm_heap_tag_t tag, Args&&... args)
+    {
+        void* ptr = tagged_alloc(tag, sizeof(T));
+        T* res = new (ptr) T(std::forward<Args>(args)...);
+        movemm_register_tagged_heap_destructor(tag, ptr,
+            [](void* ptr)
+            {
+                ((T*)ptr)->~T();
+            });
+        return res;
+    }
 
     inline void alloc(size_t bytes)
     {
         movemm_alloc(bytes);
+    }
+
+    inline void* realloc(void* memory, size_t bytes)
+    {
+        return movemm_realloc(memory, bytes);
     }
 
     inline void free(void* ptr)
@@ -69,7 +92,22 @@ namespace movemm
         movemm_free(ptr);
     }
 
-    inline void tagged_alloc(movemm_heap_tag_t tag, size_t bytes)
+    inline void* aligned_alloc(size_t bytes, size_t alignment)
+    {
+        return movemm_aligned_alloc(bytes, alignment);
+    }
+
+    inline void* aligned_realloc(void* memory, size_t bytes, size_t alignment)
+    {
+        return movemm_aligned_realloc(memory, bytes, alignment);
+    }
+
+    inline void aligned_free(void* ptr, size_t alignment)
+    {
+        movemm_aligned_free(ptr, alignment);
+    }
+
+    inline void* tagged_alloc(movemm_heap_tag_t tag, size_t bytes)
     {
         movemm_tagged_heap_alloc(tag, bytes);
     }
