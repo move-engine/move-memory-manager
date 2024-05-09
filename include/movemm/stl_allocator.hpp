@@ -12,6 +12,10 @@ namespace movemm
         using value_type = T;
         using reference = T&;
         using const_reference = T const&;
+        using pointer = T*;
+        using const_pointer = T const*;
+        using size_type = size_t;
+        using difference_type = ptrdiff_t;
 
         inline constexpr stl_allocator() noexcept
         {
