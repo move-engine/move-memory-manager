@@ -42,8 +42,8 @@ namespace movemm
         inline unique_ptr(unique_ptr<R>&& rhs)
             : _data(rhs._data), _deleter(rhs._deleter)
         {
-            static_assert(std::is_same_v<T, R> || std::is_assignable_v<T, R>,
-                "R must be assignable to T");
+            static_assert(std::is_same_v<R, T> || std::is_convertible_v<R*, T*>,
+                "Cannot convert unique_ptr to a different type");
 
             rhs._data = 0;
         }
