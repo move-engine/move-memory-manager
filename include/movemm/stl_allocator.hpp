@@ -10,6 +10,8 @@ namespace movemm
     {
     public:
         using value_type = T;
+        using reference = T&;
+        using const_reference = T const&;
 
         inline constexpr stl_allocator() noexcept
         {
