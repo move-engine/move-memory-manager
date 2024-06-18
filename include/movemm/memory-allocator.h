@@ -64,18 +64,6 @@ namespace movemm
         ptr->~T();
         movemm_free(ptr);
     }
-    template <typename T, typename... Args>
-    inline T* tagged_new(movemm_heap_tag_t tag, Args&&... args)
-    {
-        void* ptr = tagged_alloc(tag, sizeof(T));
-        T* res = new (ptr) T(std::forward<Args>(args)...);
-        movemm_register_tagged_heap_destructor(tag, ptr,
-            [](void* ptr)
-            {
-                ((T*)ptr)->~T();
-            });
-        return res;
-    }
 
     inline void* alloc(size_t bytes)
     {
@@ -115,6 +103,19 @@ namespace movemm
     inline void tagged_free(movemm_heap_tag_t tag)
     {
         movemm_tagged_heap_free(tag);
+    }
+
+    template <typename T, typename... Args>
+    inline T* tagged_new(movemm_heap_tag_t tag, Args&&... args)
+    {
+        void* ptr = tagged_alloc(tag, sizeof(T));
+        T* res = new (ptr) T(std::forward<Args>(args)...);
+        movemm_register_tagged_heap_destructor(tag, ptr,
+            [](void* ptr)
+            {
+                ((T*)ptr)->~T();
+            });
+        return res;
     }
 }  // namespace movemm
 #endif
