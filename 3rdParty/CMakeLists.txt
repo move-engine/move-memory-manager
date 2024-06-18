@@ -1,8 +1,6 @@
 include(cpm/cmake/cpm.cmake)
 
-# Using this fork/branch from https://github.com/microsoft/mimalloc/pull/673 until the fix
-# is merged for Windows.
-CPMAddPackage("gh:Unsttopabull/mimalloc#5b241ade81984c43335d229f8b4d8486683139b2")
+CPMAddPackage("gh:microsoft/mimalloc#03020fbf81541651e24289d2f7033a772a50f480")
 
 # CPMAddPackage(
 #     NAME rpmalloc
